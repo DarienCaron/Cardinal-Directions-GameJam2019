@@ -31,7 +31,11 @@ public class FlightScript : MonoBehaviour
     float XRotation = 0;
     float ZRotation = 0;
 
+    public float ZeroAdjustment = 2;
+
     public bool Landed { get; set; }
+
+
     private void Awake()
     {
         _rigidBody = GetComponent<Rigidbody>();
@@ -45,16 +49,32 @@ public class FlightScript : MonoBehaviour
 
             ForwardDirection.Normalize();
 
-            YRotation += Input.GetAxis("Horizontal") * Time.deltaTime * WingRotationSpeed;
-            XRotation += -Input.GetAxis("Vertical") * Time.deltaTime * WingRotationSpeed;
-            ZRotation += -Input.GetAxis("Horizontal") * Time.deltaTime * WingRotationSpeed;
+            if (ZRotation >= ZeroAdjustment || ZRotation <= -ZeroAdjustment)
+            {
+                YRotation += Input.GetAxis("Horizontal");
+            }
+            else if(ZRotation <= ZeroAdjustment && ZRotation > 0)
+            {
+                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(new Vector3(XRotation, 0, 0)), Time.deltaTime);
+            }
+            else if (ZRotation >= -ZeroAdjustment && ZRotation < 0)
+            {
+                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(new Vector3(XRotation, 0, 0)), Time.deltaTime);
+            }
+            XRotation += Input.GetAxis("Vertical");
+            ZRotation += -Input.GetAxis("Horizontal");
 
 
             XRotation = Mathf.Clamp(XRotation, MinAngle, MaxAngle);
             ZRotation = Mathf.Clamp(ZRotation, MinAngle, MaxAngle);
 
+           
+
+
 
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(XRotation, YRotation, ZRotation), Time.deltaTime * WingRotationSpeed);
+
+            
 
             //transform.rotation = Quaternion.Euler(XRotation, YRotation, ZRotation);
 
