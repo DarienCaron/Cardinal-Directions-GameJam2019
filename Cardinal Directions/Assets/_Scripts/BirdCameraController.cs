@@ -24,7 +24,11 @@ public class BirdCameraController : MonoBehaviour
     {
         if(ObjectToFollow)
         {
-            transform.LookAt(ObjectToFollow.transform);
+            
+                transform.LookAt(ObjectToFollow.transform);
+           
+         
+
         }
     }
 }

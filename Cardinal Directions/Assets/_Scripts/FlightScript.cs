@@ -21,7 +21,7 @@ public class FlightScript : MonoBehaviour
 
     public float MaxSpeed = 25;
 
-    public float WingRotationSpeed = 50;
+    public float WingRotationSpeed = 150;
 
     Vector3 LocalVelocity;
 
@@ -34,6 +34,12 @@ public class FlightScript : MonoBehaviour
     public float ZeroAdjustment = 2;
 
     public bool Landed { get; set; }
+
+    public FlightStates CurrentFlightState;
+
+    bool NeedsToBeZeroedOut = false;
+
+    float AdjustmentValue = 1.5f;
 
 
     private void Awake()
@@ -49,32 +55,114 @@ public class FlightScript : MonoBehaviour
 
             ForwardDirection.Normalize();
 
-            if (ZRotation >= ZeroAdjustment || ZRotation <= -ZeroAdjustment)
+         
+           
+
+            if(ZRotation > ZeroAdjustment) // Figures out the state of flight, change so that it works with percentages instead
             {
-                YRotation += Input.GetAxis("Horizontal");
+                CurrentFlightState = FlightStates.TurningLeft;
             }
-            else if(ZRotation <= ZeroAdjustment && ZRotation > 0)
+            if (ZRotation < -ZeroAdjustment)
             {
-                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(new Vector3(XRotation, 0, 0)), Time.deltaTime);
+                CurrentFlightState = FlightStates.TurningRight;
             }
-            else if (ZRotation >= -ZeroAdjustment && ZRotation < 0)
+            if (ZRotation > 35)
             {
-                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(new Vector3(XRotation, 0, 0)), Time.deltaTime);
+                CurrentFlightState = FlightStates.HardLeft;
             }
-            XRotation += Input.GetAxis("Vertical");
+            if (ZRotation < -35)
+            {
+                CurrentFlightState = FlightStates.HardRight;
+            }
+
+            if(ZRotation < ZeroAdjustment && ZRotation > -ZeroAdjustment)
+            {
+                CurrentFlightState = FlightStates.ZeroedOut;
+            }
+
+            
+            switch (CurrentFlightState)
+            {
+                case FlightStates.TurningLeft: // Slight left and right turns
+                    if (Input.GetKeyDown(KeyCode.D))
+                    {
+                        NeedsToBeZeroedOut = true;
+                        AdjustmentValue = 1.5f;
+                    }
+                    if (NeedsToBeZeroedOut)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        YRotation += Input.GetAxis("Horizontal") / AdjustmentValue; // allow for y rotation
+                        AdjustmentValue = Mathf.Lerp(AdjustmentValue, 0, Time.deltaTime); // lerp for a smooth transition
+                        AdjustmentValue = Mathf.Clamp(AdjustmentValue, 0, 1.5f);
+
+                    }
+                    break;
+                case FlightStates.TurningRight:
+                    if (Input.GetKeyDown(KeyCode.A))
+                    {
+                        NeedsToBeZeroedOut = true;
+                        AdjustmentValue = 1.5f;
+                    }
+                    if (NeedsToBeZeroedOut)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        YRotation += Input.GetAxis("Horizontal") / AdjustmentValue;
+                        AdjustmentValue = Mathf.Lerp(AdjustmentValue, 0, Time.deltaTime);
+                        AdjustmentValue = Mathf.Clamp(AdjustmentValue, 0, 1.5f);
+                        
+                    }
+                    break;
+                case FlightStates.HardLeft:
+                    if (Input.GetKeyDown(KeyCode.D))
+                    {
+                        NeedsToBeZeroedOut = true;
+                        break;
+                    }
+
+                    if(!NeedsToBeZeroedOut) // If we aren't trying to straighten out
+                    YRotation += Input.GetAxis("Horizontal");
+                
+                    break;
+                case FlightStates.HardRight:
+                    if (Input.GetKeyDown(KeyCode.A))
+                    {
+                        NeedsToBeZeroedOut = true;
+                        break;
+                    }
+                    if(!NeedsToBeZeroedOut)
+                    YRotation += Input.GetAxis("Horizontal");
+                    
+                    break;
+                case FlightStates.ZeroedOut:
+                    NeedsToBeZeroedOut = false;
+                    AdjustmentValue = 1.5f;
+                    break;
+            }
+
+
+            XRotation += Input.GetAxis("Vertical"); // Get our rotational axis
             ZRotation += -Input.GetAxis("Horizontal");
 
 
-            XRotation = Mathf.Clamp(XRotation, MinAngle, MaxAngle);
+            XRotation = Mathf.Clamp(XRotation, MinAngle, MaxAngle); // Clamp the rotation
             ZRotation = Mathf.Clamp(ZRotation, MinAngle, MaxAngle);
 
            
 
 
 
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(XRotation, YRotation, ZRotation), Time.deltaTime * WingRotationSpeed);
-
             
+
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(XRotation, YRotation, ZRotation), Time.fixedDeltaTime * WingRotationSpeed); // Slerp the wing rotation
+
+
 
             //transform.rotation = Quaternion.Euler(XRotation, YRotation, ZRotation);
 
@@ -93,4 +181,12 @@ public class FlightScript : MonoBehaviour
         
     }
     
+    public enum FlightStates
+    {
+        HardLeft,
+        HardRight,
+        TurningLeft,
+        TurningRight,
+        ZeroedOut
+    }
 }
