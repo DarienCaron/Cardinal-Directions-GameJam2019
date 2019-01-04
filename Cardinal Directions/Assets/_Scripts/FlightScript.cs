@@ -66,11 +66,11 @@ public class FlightScript : MonoBehaviour
             {
                 CurrentFlightState = FlightStates.TurningRight;
             }
-            if (ZRotation > 35)
+            if (ZRotation > 40)
             {
                 CurrentFlightState = FlightStates.HardLeft;
             }
-            if (ZRotation < -35)
+            if (ZRotation < -40)
             {
                 CurrentFlightState = FlightStates.HardRight;
             }
@@ -84,65 +84,36 @@ public class FlightScript : MonoBehaviour
             switch (CurrentFlightState)
             {
                 case FlightStates.TurningLeft: // Slight left and right turns
-                    if (Input.GetKeyDown(KeyCode.D))
-                    {
-                        NeedsToBeZeroedOut = true;
-                        AdjustmentValue = 1.5f;
-                    }
-                    if (NeedsToBeZeroedOut)
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        YRotation += Input.GetAxis("Horizontal") / AdjustmentValue; // allow for y rotation
-                        AdjustmentValue = Mathf.Lerp(AdjustmentValue, 0, Time.deltaTime); // lerp for a smooth transition
-                        AdjustmentValue = Mathf.Clamp(AdjustmentValue, 0, 1.5f);
-
-                    }
+                    YRotation -= 0.15f;
                     break;
                 case FlightStates.TurningRight:
-                    if (Input.GetKeyDown(KeyCode.A))
+                    YRotation += 0.15f;
+                    break;
+                case FlightStates.HardLeft:
+
+                    if (ZRotation >= 40)
                     {
-                        NeedsToBeZeroedOut = true;
-                        AdjustmentValue = 1.5f;
-                    }
-                    if (NeedsToBeZeroedOut)
-                    {
-                        break;
+                        YRotation -= 0.5f;
                     }
                     else
                     {
-                        YRotation += Input.GetAxis("Horizontal") / AdjustmentValue;
-                        AdjustmentValue = Mathf.Lerp(AdjustmentValue, 0, Time.deltaTime);
-                        AdjustmentValue = Mathf.Clamp(AdjustmentValue, 0, 1.5f);
-                        
-                    }
-                    break;
-                case FlightStates.HardLeft:
-                    if (Input.GetKeyDown(KeyCode.D))
-                    {
-                        NeedsToBeZeroedOut = true;
-                        break;
+                        YRotation += Input.GetAxis("Horizontal");
                     }
 
-                    if(!NeedsToBeZeroedOut) // If we aren't trying to straighten out
-                    YRotation += Input.GetAxis("Horizontal");
-                
                     break;
                 case FlightStates.HardRight:
-                    if (Input.GetKeyDown(KeyCode.A))
-                    {
-                        NeedsToBeZeroedOut = true;
-                        break;
-                    }
-                    if(!NeedsToBeZeroedOut)
-                    YRotation += Input.GetAxis("Horizontal");
                     
+                    if(ZRotation <= -40)
+                    {
+                        YRotation += 0.5f;
+                    }
+                    else
+                    {
+                        YRotation += Input.GetAxis("Horizontal");
+                    }
                     break;
                 case FlightStates.ZeroedOut:
-                    NeedsToBeZeroedOut = false;
-                    AdjustmentValue = 1.5f;
+                  
                     break;
             }
 
@@ -151,24 +122,21 @@ public class FlightScript : MonoBehaviour
             ZRotation += -Input.GetAxis("Horizontal");
 
 
-            XRotation = Mathf.Clamp(XRotation, MinAngle, MaxAngle); // Clamp the rotation
+            XRotation = Mathf.Clamp(XRotation, MinAngle - 15, MaxAngle + 15); // Clamp the rotation
             ZRotation = Mathf.Clamp(ZRotation, MinAngle, MaxAngle);
 
-           
 
 
 
-            
 
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(XRotation, YRotation, ZRotation), Time.fixedDeltaTime * WingRotationSpeed); // Slerp the wing rotation
+
+            transform.rotation = Quaternion.SlerpUnclamped(transform.rotation, Quaternion.Euler(XRotation, YRotation, ZRotation), Time.fixedDeltaTime * WingRotationSpeed); // Slerp the wing rotation
 
 
 
             //transform.rotation = Quaternion.Euler(XRotation, YRotation, ZRotation);
 
 
-
-            Debug.Log(ForwardDirection);
 
             transform.Translate(ForwardDirection * Time.deltaTime * FlightSpeed, Space.World);
         }

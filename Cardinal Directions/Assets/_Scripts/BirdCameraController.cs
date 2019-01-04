@@ -9,6 +9,9 @@ public class BirdCameraController : MonoBehaviour
 
     public Transform LocationToSit;
 
+    public float CameraRotationSpeed;
+    public float CameraFollowSpeed;
+
 
     private void Awake()
     {
@@ -24,11 +27,17 @@ public class BirdCameraController : MonoBehaviour
     {
         if(ObjectToFollow)
         {
+
+            Vector3 Position = ObjectToFollow.transform.position;
+
             
-                transform.LookAt(ObjectToFollow.transform);
+
+            transform.LookAt(Position);
            
-         
+
+
 
         }
+       
     }
 }
