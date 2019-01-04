@@ -41,6 +41,12 @@ public class FlightScript : MonoBehaviour
 
     float AdjustmentValue = 1.5f;
 
+    float CenterOutTimer = 0;
+
+    public bool IsSpinning = false;
+
+    public float ThreeSixtyAdjustment = 0;
+
 
     private void Awake()
     {
@@ -55,45 +61,59 @@ public class FlightScript : MonoBehaviour
 
             ForwardDirection.Normalize();
 
-         
-           
 
-            if(ZRotation > ZeroAdjustment) // Figures out the state of flight, change so that it works with percentages instead
+            if(Input.GetKeyDown(KeyCode.F))
             {
-                CurrentFlightState = FlightStates.TurningLeft;
-            }
-            if (ZRotation < -ZeroAdjustment)
-            {
-                CurrentFlightState = FlightStates.TurningRight;
-            }
-            if (ZRotation > 40)
-            {
-                CurrentFlightState = FlightStates.HardLeft;
-            }
-            if (ZRotation < -40)
-            {
-                CurrentFlightState = FlightStates.HardRight;
+                Flap();
             }
 
-            if(ZRotation < ZeroAdjustment && ZRotation > -ZeroAdjustment)
+            if (!NeedsToBeZeroedOut)
             {
-                CurrentFlightState = FlightStates.ZeroedOut;
+                if (ZRotation > ZeroAdjustment) // Figures out the state of flight, change so that it works with percentages instead
+                {
+                    CurrentFlightState = FlightStates.TurningLeft;
+                }
+                if (ZRotation < -ZeroAdjustment)
+                {
+                    CurrentFlightState = FlightStates.TurningRight;
+                }
+                if (ZRotation > 40)
+                {
+                    CurrentFlightState = FlightStates.HardLeft;
+                }
+                if (ZRotation < -40)
+                {
+                    CurrentFlightState = FlightStates.HardRight;
+                }
             }
+
+            
 
             
             switch (CurrentFlightState)
             {
                 case FlightStates.TurningLeft: // Slight left and right turns
                     YRotation -= 0.15f;
+                    if (Input.GetKey(KeyCode.D) && !NeedsToBeZeroedOut)
+                    {
+                        CurrentFlightState = FlightStates.ZeroedOut;
+                        NeedsToBeZeroedOut = true;
+                    }
                     break;
                 case FlightStates.TurningRight:
                     YRotation += 0.15f;
+                    if(Input.GetKey(KeyCode.A) && !NeedsToBeZeroedOut)
+                    {
+                        CurrentFlightState = FlightStates.ZeroedOut;
+                        NeedsToBeZeroedOut = true;
+                    }
                     break;
                 case FlightStates.HardLeft:
 
                     if (ZRotation >= 40)
                     {
                         YRotation -= 0.5f;
+                        
                     }
                     else
                     {
@@ -113,41 +133,126 @@ public class FlightScript : MonoBehaviour
                     }
                     break;
                 case FlightStates.ZeroedOut:
-                  
+                  if(NeedsToBeZeroedOut)
+                    {
+                        ZRotation = Mathf.Lerp(ZRotation, 0, Time.deltaTime);
+                        transform.rotation = Quaternion.SlerpUnclamped(transform.rotation, Quaternion.Euler(XRotation, YRotation, ZRotation), Time.fixedDeltaTime * WingRotationSpeed); // Slerp the wing rotation
+                       
+                    }
                     break;
             }
 
+            if (ZRotation >= -1f && ZRotation <= 1f)
+            {
+                NeedsToBeZeroedOut = false;
+            }
 
-            XRotation += Input.GetAxis("Vertical"); // Get our rotational axis
-            ZRotation += -Input.GetAxis("Horizontal");
+            if (!IsSpinning)
+            {
+
+
+                XRotation += Input.GetAxis("Vertical"); // Get our rotational axis
+                ZRotation += -Input.GetAxis("Horizontal");
+            }
 
 
             XRotation = Mathf.Clamp(XRotation, MinAngle - 15, MaxAngle + 15); // Clamp the rotation
-            ZRotation = Mathf.Clamp(ZRotation, MinAngle, MaxAngle);
+            if (!IsSpinning)
+            {
+                ZRotation = Mathf.Clamp(ZRotation, MinAngle, MaxAngle);
+            }
 
 
 
 
 
+            if (IsSpinning)
+            {
+                transform.rotation = Quaternion.SlerpUnclamped(transform.rotation, Quaternion.Euler(XRotation, YRotation, ZRotation + ThreeSixtyAdjustment), Time.fixedDeltaTime * WingRotationSpeed); // Slerp the wing rotation
 
-            transform.rotation = Quaternion.SlerpUnclamped(transform.rotation, Quaternion.Euler(XRotation, YRotation, ZRotation), Time.fixedDeltaTime * WingRotationSpeed); // Slerp the wing rotation
-
+            }
+            else
+            {
+                transform.rotation = Quaternion.SlerpUnclamped(transform.rotation, Quaternion.Euler(XRotation, YRotation, ZRotation), Time.fixedDeltaTime * WingRotationSpeed);
+            }
 
 
             //transform.rotation = Quaternion.Euler(XRotation, YRotation, ZRotation);
 
+            Vector3 Velocity = ForwardDirection * Time.deltaTime * FlightSpeed;
+
+            Velocity.y -= Gravity * Time.deltaTime;
+
+            transform.Translate(Velocity, Space.World);
+
+            
 
 
-            transform.Translate(ForwardDirection * Time.deltaTime * FlightSpeed, Space.World);
+            if(transform.forward.y >= 0.4f)
+            {
+                FlightSpeed -= Time.deltaTime * 2;
+            }
+            else if(transform.forward.y <= -0.4f)
+            {
+                FlightSpeed += Time.deltaTime * 2;
+            }
+            else
+            {
+                FlightSpeed -= Time.deltaTime;
+            }
+
+            FlightSpeed = Mathf.Clamp(FlightSpeed, 0, MaxSpeed);
+           
+            if(Input.GetKeyDown(KeyCode.Space) && !IsSpinning)
+            {
+                IsSpinning = true;
+                
+            }
+
+            
+
+            if(IsSpinning)
+            {
+                switch(CurrentFlightState)
+                {
+                    case FlightStates.TurningLeft:
+                        ThreeSixtyAdjustment = Mathf.LerpUnclamped(ThreeSixtyAdjustment, -360, Time.deltaTime * 1.75f );
+                        break;
+                    case FlightStates.HardLeft:
+                        ThreeSixtyAdjustment = Mathf.LerpUnclamped(ThreeSixtyAdjustment, -360, Time.deltaTime * 1.75f);
+                        break;
+                    case FlightStates.HardRight:
+                        ThreeSixtyAdjustment = Mathf.LerpUnclamped(ThreeSixtyAdjustment, 360, Time.deltaTime * 1.75f);
+                        break;
+                    case FlightStates.TurningRight:
+                        ThreeSixtyAdjustment = Mathf.LerpUnclamped(ThreeSixtyAdjustment, 360, Time.deltaTime * 1.75f);
+                        break;
+                    case FlightStates.ZeroedOut:
+                        ThreeSixtyAdjustment = Mathf.LerpUnclamped(ThreeSixtyAdjustment, 360, Time.deltaTime * 1.75f);
+                        break;
+                }
+
+                if(ThreeSixtyAdjustment >= 355 || ThreeSixtyAdjustment <= -355)
+                {
+                    IsSpinning = false;
+                    ThreeSixtyAdjustment = 0;
+                    
+                }
+                
+            }
+
+            
         }
     }
 
 
     public void Flap()
     {
-       
+        FlightSpeed += 5;
         
     }
+
+
     
     public enum FlightStates
     {
