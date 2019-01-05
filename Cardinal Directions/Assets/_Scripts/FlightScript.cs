@@ -47,6 +47,8 @@ public class FlightScript : MonoBehaviour
 
     public float ThreeSixtyAdjustment = 0;
 
+    public Transform ArrowLocation;
+
 
     private void Awake()
     {
@@ -156,7 +158,7 @@ public class FlightScript : MonoBehaviour
                 //XRotation += Input.GetAxis("Vertical"); // Get our rotational axis
                 //ZRotation += -Input.GetAxis("Horizontal");
 
-                XRotation += Input.GetAxis("Mouse Y"); // Get our rotational axis
+                XRotation += Input.GetAxis("Mouse Y") / 1.5f; // Get our rotational axis
                 ZRotation += -Input.GetAxis("Mouse X");
             }
 

@@ -12,10 +12,12 @@ public class BirdCameraController : MonoBehaviour
     public float CameraRotationSpeed;
     public float CameraFollowSpeed;
 
+    public Vector3 LocationToLook;
+
 
     private void Awake()
     {
-        
+        LocationToLook = ObjectToFollow.transform.position - transform.position;
     }
 
     private void Update()
@@ -27,13 +29,15 @@ public class BirdCameraController : MonoBehaviour
     {
         if(ObjectToFollow)
         {
+            Vector3 Position = ObjectToFollow.transform.position - transform.position; 
+            Position.Normalize();
 
-            Vector3 Position = ObjectToFollow.transform.position;
+            LocationToLook = Vector3.Slerp(LocationToLook, Position, Time.deltaTime);
+
+            transform.rotation = Quaternion.LookRotation(LocationToLook, Vector3.up);
 
             
 
-            transform.LookAt(Position);
-           
 
 
 
