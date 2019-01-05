@@ -117,7 +117,8 @@ public class FlightScript : MonoBehaviour
                     }
                     else
                     {
-                        YRotation += Input.GetAxis("Horizontal");
+                        //YRotation += Input.GetAxis("Horizontal");
+                        YRotation += Input.GetAxis("Mouse X");
                     }
 
                     break;
@@ -129,7 +130,8 @@ public class FlightScript : MonoBehaviour
                     }
                     else
                     {
-                        YRotation += Input.GetAxis("Horizontal");
+                        //YRotation += Input.GetAxis("Horizontal");
+                        YRotation += Input.GetAxis("Mouse X");
                     }
                     break;
                 case FlightStates.ZeroedOut:
@@ -151,9 +153,14 @@ public class FlightScript : MonoBehaviour
             {
 
 
-                XRotation += Input.GetAxis("Vertical"); // Get our rotational axis
-                ZRotation += -Input.GetAxis("Horizontal");
+                //XRotation += Input.GetAxis("Vertical"); // Get our rotational axis
+                //ZRotation += -Input.GetAxis("Horizontal");
+
+                XRotation += Input.GetAxis("Mouse Y"); // Get our rotational axis
+                ZRotation += -Input.GetAxis("Mouse X");
             }
+
+
 
 
             XRotation = Mathf.Clamp(XRotation, MinAngle - 15, MaxAngle + 15); // Clamp the rotation
@@ -209,6 +216,11 @@ public class FlightScript : MonoBehaviour
                 
             }
 
+            if(GlobalClock.CurrentTime >= 18)
+            {
+                Debug.Log("You Are Dead");
+            }
+
             
 
             if(IsSpinning)
@@ -242,6 +254,15 @@ public class FlightScript : MonoBehaviour
             }
 
             
+        }
+        else
+        {
+            if(Input.GetKeyDown(KeyCode.T))
+            {
+                Landed = false;
+                transform.position += new Vector3(transform.position.x, transform.position.y + 4, transform.position.z);
+                FlightSpeed = 15;
+            }
         }
     }
 

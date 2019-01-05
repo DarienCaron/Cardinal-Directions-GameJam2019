@@ -10,6 +10,8 @@ public class GlobalClock : MonoBehaviour {
     public float TimeStep = 60f;
 
     public float TimeofDayToStartAt = 7;
+
+    public static bool DayPassed = false;
     private void Awake()
     {
         CurrentTime = TimeofDayToStartAt;
@@ -18,13 +20,29 @@ public class GlobalClock : MonoBehaviour {
 
     private void Update()
     {
-        CurrentTime += Time.deltaTime / TimeStep;
-
-        CurrentTime = Mathf.Clamp(CurrentTime, 0, 24);
-
-        if(CurrentTime >= 24)
+        if (!DayPassed)
         {
-            CurrentTime = 0;
+            CurrentTime += Time.deltaTime / TimeStep;
+
+            CurrentTime = Mathf.Clamp(CurrentTime, 0, 24);
+            if (CurrentTime >= 24)
+            {
+                DayPassed = true;
+                CurrentTime = 0;
+            }
+        }
+      
+
+        if(DayPassed)
+        {
+            
+            CurrentTime = Mathf.Lerp(CurrentTime, TimeofDayToStartAt, Time.deltaTime);
+
+            if(CurrentTime >= TimeofDayToStartAt)
+            {
+                DayPassed = false;
+                CurrentTime = TimeofDayToStartAt;
+            }
         }
     }
 

@@ -33,15 +33,28 @@ public class Nest : MonoBehaviour {
             other.gameObject.GetComponent<Rigidbody>().MovePosition(NestRestLocation.position);
             other.gameObject.transform.rotation = Quaternion.Euler(0, 0, 0);
             TimeInNest = (int)GlobalClock.CurrentTime;
-           
+            timechange = TimeInNest;
         }
     }
     private void Update()
     {
         if(IsNested)
         {
-            timechange = Mathf.Lerp(timechange, 7, Time.deltaTime);
-            GlobalClock.SetGlobalTime(timechange);
+            if (!GlobalClock.DayPassed)
+            {
+                timechange = Mathf.Lerp(timechange, 25, Time.deltaTime);
+
+
+
+                GlobalClock.SetGlobalTime(timechange);
+            }
         }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        IsNested = false;
+        TimeInNest = 0;
+        timechange = 0;
     }
 }
